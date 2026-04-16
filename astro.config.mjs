@@ -26,8 +26,10 @@ import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
 
 // https://astro.build/config
 export default defineConfig({
-	site: "https://qingl-blog.netlify.app/",
-	base: "/",
+	// site: "https://qingl-blog.netlify.app/",
+	// base: "/",
+	site: "https://Leif-Wang-021.github.io",
+	base: "/QingL-s-Blog", // 你的 GitHub 仓库名称
 	trailingSlash: "always",
 	integrations: [
 		tailwind({
