@@ -1,13 +1,10 @@
 name: Deploy to GitHub Pages
 
 on:
-  # 每次 push 到 main 分支时自动触发
   push:
     branches: [ main ]
-  # 允许手动触发
   workflow_dispatch:
 
-# 设置权限
 permissions:
   contents: read
   pages: write
@@ -23,23 +20,11 @@ jobs:
     steps:
       - name: Checkout your repository using git
         uses: actions/checkout@v4
-      
-      # 因为你的项目基于 pnpm (Fuwari默认配置)，我们需要安装 pnpm
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9
-          
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'pnpm'
-
+        
+      # 直接使用 Astro 的 Action，删掉手动配置的 pnpm 和 Node 步骤
+      # 它会自动识别你 package.json 里的 pnpm@9.14.4 并完成所有工作
       - name: Install, build, and upload your site
         uses: withastro/action@v3
-        with:
-          package-manager: pnpm
 
   deploy:
     needs: build
