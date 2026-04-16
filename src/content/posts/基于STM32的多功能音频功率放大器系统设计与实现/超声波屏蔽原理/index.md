@@ -2,7 +2,7 @@
 title: 超声波屏蔽原理
 published: 2026-04-17
 description: "本文记录了如何使用超声波实现录音屏蔽"
-image: "./超声波探头频谱特性.png"
+image: "./cover.png"
 tags: ["超声波屏蔽", "毕业设计"]
 category: 基于STM32的多功能音频功率放大器系统设计与实现
 draft: false
