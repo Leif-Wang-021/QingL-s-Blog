@@ -39,7 +39,7 @@ $$\large Frequency = \frac{SYSCLK}{(PSC + 1) \times (ARR + 1)}$$
 
 所以，“扫频”的本质，就是在代码的死循环中，让 ARR 的值在 2056 到 1599 之间来回变化，同时保持 CCR = ARR / 2 使得占空比始终稳定在 50%。
 
-##CubeMX 硬件配置
+## CubeMX 硬件配置
 
 由于完全剥离了 IDE 内部集成，我们直接在独立的 STM32CubeMX 中进行初始化配置：
 
