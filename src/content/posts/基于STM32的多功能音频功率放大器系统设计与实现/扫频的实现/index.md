@@ -18,7 +18,7 @@ draft: false
 
 ## 搭建教程
 
-我参照了 keysking 在 Bilibili 的教程，进行了整个开发环境的搭建。
+我参照了 [keysking](https://space.bilibili.com/6100925) 在 Bilibili 的教程，进行了整个开发环境的搭建。
 
 <iframe width="100%" height="468" src="//player.bilibili.com/player.html?isOutside=true&aid=115032427859038&bvid=BV1QfbpzGENy&cid=31715296031&p=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
 
