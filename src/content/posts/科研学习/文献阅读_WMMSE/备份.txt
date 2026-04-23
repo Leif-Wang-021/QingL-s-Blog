@@ -1,0 +1,793 @@
+function result = WMMSE_SISO(H, P, noiseVar, alpha, opts)
+%WMMSE_SISO  Weighted MMSE algorithm for the SISO interference channel.
+%
+%   result = WMMSE_SISO(H, P, noiseVar, alpha, opts)
+%   result = WMMSE_SISO("sectionv")   runs the Section V-style figures.
+
+%   If called with no inputs, the function runs a small built-in demo so
+%   that the file can be executed directly from the MATLAB editor.
+%
+%   Inputs
+%   ------
+%   H        : K x K complex channel matrix, where H(i,j) is the channel
+%              from transmitter j to receiver i.
+%   P        : Scalar or K x 1 vector of per-transmitter power budgets.
+%   noiseVar : Scalar or K x 1 vector of receiver noise powers.
+%   alpha    : Scalar or K x 1 vector of user weights.
+%   opts     : Optional struct with fields
+%              - maxIter   : maximum number of iterations (default 200)
+%              - tol       : stopping tolerance on sum(log(w)) (default 1e-6)
+%              - verbose   : true/false, print progress (default false)
+%              - initPhase : optional K x 1 phase vector for initialization
+%
+%   Outputs
+%   -------
+%   result.v         : K x 1 transmit beamformers
+%   result.u         : K x 1 MMSE receivers
+%   result.w         : K x 1 auxiliary weights
+%   result.rateNat    : K x 1 user rates in nats/s/Hz
+%   result.rateBit    : K x 1 user rates in bit/s/Hz
+%   result.sumRateNat : final weighted sum-rate in nats/s/Hz
+%   result.sumRateBit : final weighted sum-rate in bit/s/Hz
+%   result.history    : iteration history
+
+	if nargin == 0
+		fprintf('No input detected. Running Section V plots...\n');
+		result = WMMSE_RunSectionV();
+		return;
+	end
+
+	if ischar(H) || isstring(H)
+		command = lower(string(H));
+		if command == "sectionv"
+			result = WMMSE_RunSectionV();
+			return;
+		end
+		error('Unknown command string. Use WMMSE_SISO("sectionv") or call the solver with numeric inputs.');
+	end
+
+	if nargin < 4
+		error('WMMSE_SISO requires at least H, P, noiseVar, and alpha.');
+	end
+
+	if nargin < 5
+		opts = struct();
+	end
+
+	opts = applyDefaults(opts);
+
+	[K, K2] = size(H);
+	if K ~= K2
+		error('H must be a square K x K channel matrix for the SISO interference channel.');
+	end
+
+	P = expandToVector(P, K, 'P');
+	noiseVar = expandToVector(noiseVar, K, 'noiseVar');
+	alpha = expandToVector(alpha, K, 'alpha');
+
+	v = initializeBeamformers(P, opts);
+	history.sumRateNat = zeros(opts.maxIter, 1);
+	history.sumRateBit = zeros(opts.maxIter, 1);
+	history.metric = zeros(opts.maxIter, 1);
+
+	prevMetric = inf;
+	finalIter = 0;
+
+	for iter = 1:opts.maxIter
+		finalIter = iter;
+
+		[u, w, ~, rateNat] = updateReceiverAndWeight(H, v, noiseVar);
+		history.sumRateNat(iter) = sum(alpha .* rateNat);
+		history.sumRateBit(iter) = history.sumRateNat(iter) / log(2);
+		history.metric(iter) = sum(log(w));
+
+		if isfinite(prevMetric) && abs(history.metric(iter) - prevMetric) <= opts.tol
+			break;
+		end
+
+		prevMetric = history.metric(iter);
+		v = updateTransmitBeamformers(H, u, w, alpha, P);
+
+		if opts.verbose
+			fprintf('Iter %3d: weighted sum-rate = %.8f bits/s/Hz\n', iter, history.sumRateBit(iter));
+		end
+	end
+
+	[u, w, sinr, rateNat] = updateReceiverAndWeight(H, v, noiseVar);
+	history.sumRateNat(finalIter) = sum(alpha .* rateNat);
+	history.sumRateBit(finalIter) = history.sumRateNat(finalIter) / log(2);
+	history.metric(finalIter) = sum(log(w));
+
+	history.sumRateNat = history.sumRateNat(1:finalIter);
+	history.sumRateBit = history.sumRateBit(1:finalIter);
+	history.metric = history.metric(1:finalIter);
+
+	result.v = v;
+	result.u = u;
+	result.w = w;
+	result.sinr = sinr;
+	result.rateNat = rateNat;
+	result.rateBit = rateNat / log(2);
+	result.sumRateNat = sum(alpha .* rateNat);
+	result.sumRateBit = result.sumRateNat / log(2);
+	result.alpha = alpha;
+	result.P = P;
+	result.noiseVar = noiseVar;
+	result.history = history;
+end
+
+function results = WMMSE_RunSectionV()
+%WMMSE_RunSectionV  Practical Section V reproduction entry point.
+
+	rng(1);
+	results = struct();
+	results.fig1 = WMMSE_RunFig1Convergence();
+	results.fig2 = WMMSE_RunFig2SisoRateVsSnr();
+	results.fig3 = WMMSE_RunFig3MimoRateVsSnr();
+	results.fig4 = WMMSE_RunFig4CpuTime();
+end
+
+function result = WMMSE_RunFig1Convergence()
+	snrDb = 25;
+	P = 10^(snrDb / 10);
+	noiseVar = 1;
+
+	% Fig. 1(a): SISO-IFC, K=3, epsilon=1e-3
+	K1 = 3;
+	Hsiso = (randn(K1) + 1j * randn(K1)) / sqrt(2);
+	siso = WMMSE_SISO(Hsiso, P, noiseVar, ones(K1, 1), struct('maxIter', 50, 'tol', 1e-3, 'verbose', false));
+
+	% Fig. 1(b): MIMO-IFC, K=4, T=3, R=2, epsilon=1e-2
+	K2 = 4;
+	Nt = 3;
+	Nr = 2;
+	Hmimo = WMMSE_RandomChannelCell(K2, Nr, Nt);
+	mimo = WMMSE_MIMO_1stream(Hmimo, P, noiseVar, ones(K2, 1), struct('maxIter', 50, 'tol', 1e-2, 'verbose', false));
+
+	figure('Name', 'Fig. 1 - Convergence Examples', 'NumberTitle', 'off');
+	subplot(1, 2, 1);
+	plot(siso.history.sumRateBit, '-o', 'LineWidth', 1.5, 'MarkerSize', 5);
+	grid on;
+	xlabel('Interations');
+	ylabel('sum rate (bits per channel use)');
+	title('Fig. 1(a): SISO, K=3, \epsilon=10^{-3}');
+	legend('WMMSE', 'Location', 'southeast', 'Interpreter', 'none');
+
+	subplot(1, 2, 2);
+	plot(mimo.history.sumRateBit, '-s', 'LineWidth', 1.5, 'MarkerSize', 5);
+	grid on;
+	xlabel('Interations');
+	ylabel('sum rate (bits per channel use)');
+	title('Fig. 1(b): MIMO, K=4, T=3, R=2, \epsilon=10^{-2}');
+	legend('WMMSE', 'Location', 'southeast', 'Interpreter', 'none');
+	drawnow;
+
+	result.sisoHistory = siso.history;
+	result.mimoHistory = mimo.history;
+	result.snrDb = snrDb;
+end
+
+function result = WMMSE_RunFig2SisoRateVsSnr()
+	snrDbList = 0:5:30;
+	trialCount = 100;
+	multistartCount = 10;
+	gridStep = 0.05;
+
+	curvesK3 = WMMSE_RunFig2Case(3, snrDbList, trialCount, multistartCount, true, gridStep);
+	curvesK10 = WMMSE_RunFig2Case(10, snrDbList, trialCount, multistartCount, false, gridStep);
+
+	figure(1001);
+	set(gcf, 'Name', 'Fig. 2 - SISO Average Sum Rate vs SNR', 'NumberTitle', 'off');
+	clf;
+	hold on;
+	plot(snrDbList, curvesK3.bruteforce, '-^', 'LineWidth', 1.5);
+	plot(snrDbList, curvesK3.wmmse, '-o', 'LineWidth', 1.5);
+	plot(snrDbList, curvesK3.ila, '-d', 'LineWidth', 1.5);
+	plot(snrDbList, curvesK3.wmmse10, '-s', 'LineWidth', 1.5);
+	plot(snrDbList, curvesK3.ila10, '-x', 'LineWidth', 1.5);
+	plot(snrDbList, curvesK10.wmmse, '--o', 'LineWidth', 1.5);
+	plot(snrDbList, curvesK10.ila, '--d', 'LineWidth', 1.5);
+	plot(snrDbList, curvesK10.wmmse10, '--s', 'LineWidth', 1.5);
+	plot(snrDbList, curvesK10.ila10, '--x', 'LineWidth', 1.5);
+	legend('brute force search (K=3)', 'WMMSE (K=3)', 'ILA (K=3)', 'WMMSE_10rand_init (K=3)', 'ILA_10rand_init (K=3)', 'WMMSE (K=10)', 'ILA (K=10)', 'WMMSE_10rand_init (K=10)', 'ILA_10rand_init (K=10)', 'Location', 'northwest', 'Interpreter', 'none');
+	grid on;
+	xlabel('SNR');
+	ylabel('average sum rate (bit per channel use)');
+	title('Fig. 2 (K=3 and K=10 in one plot)');
+	drawnow;
+
+	result.snrDbList = snrDbList;
+	result.k3 = curvesK3;
+	result.k10 = curvesK10;
+end
+
+function result = WMMSE_RunFig3MimoRateVsSnr()
+	snrDbList = 0:5:30;
+	trialCount = 100;
+	multistartCount = 10;
+
+	curvesCase1 = WMMSE_RunFig3Case(10, 3, 2, snrDbList, trialCount, multistartCount);
+	curvesCase2 = WMMSE_RunFig3Case(3, 2, 2, snrDbList, trialCount, multistartCount);
+
+	figure(1002);
+	set(gcf, 'Name', 'Fig. 3 - MIMO Average Sum Rate vs SNR', 'NumberTitle', 'off');
+	clf;
+	hold on;
+	plot(snrDbList, curvesCase1.wmmse, '-o', 'LineWidth', 1.5);
+	plot(snrDbList, curvesCase1.mmse, '-s', 'LineWidth', 1.5);
+	plot(snrDbList, curvesCase1.ila, '-d', 'LineWidth', 1.5);
+	plot(snrDbList, curvesCase1.wmmse10, '-^', 'LineWidth', 1.5);
+	plot(snrDbList, curvesCase1.ila10, '-x', 'LineWidth', 1.5);
+	plot(snrDbList, curvesCase2.wmmse, '--o', 'LineWidth', 1.5);
+	plot(snrDbList, curvesCase2.mmse, '--s', 'LineWidth', 1.5);
+	plot(snrDbList, curvesCase2.ila, '--d', 'LineWidth', 1.5);
+	plot(snrDbList, curvesCase2.wmmse10, '--^', 'LineWidth', 1.5);
+	plot(snrDbList, curvesCase2.ila10, '--x', 'LineWidth', 1.5);
+	grid on;
+	xlabel('SNR');
+	ylabel('average sum rate (bit per channel use)');
+	legend('WMMSE (K=10,T=3,R=2)', 'MMSE (K=10,T=3,R=2)', 'ILA (K=10,T=3,R=2)', 'WMMSE_10rand_init (K=10,T=3,R=2)', 'ILA_10rand_init (K=10,T=3,R=2)', 'WMMSE (K=3,T=2,R=2)', 'MMSE (K=3,T=2,R=2)', 'ILA (K=3,T=2,R=2)', 'WMMSE_10rand_init (K=3,T=2,R=2)', 'ILA_10rand_init (K=3,T=2,R=2)', 'Location', 'northwest', 'Interpreter', 'none');
+	title('Fig. 3 (two scenarios in one plot)');
+	drawnow;
+
+	result.snrDbList = snrDbList;
+	result.caseK10 = curvesCase1;
+	result.caseK3 = curvesCase2;
+end
+
+function curves = WMMSE_RunFig2Case(userCount, snrDbList, trialCount, multistartCount, withBruteforce, gridStep)
+	curves.wmmse = zeros(size(snrDbList));
+	curves.ila = zeros(size(snrDbList));
+	curves.wmmse10 = zeros(size(snrDbList));
+	curves.ila10 = zeros(size(snrDbList));
+	curves.bruteforce = nan(size(snrDbList));
+
+	for idx = 1:numel(snrDbList)
+		snrLinear = 10^(snrDbList(idx) / 10);
+		powerBudget = snrLinear;
+		noiseVar = 1;
+
+		wmmseValues = zeros(trialCount, 1);
+		ilaValues = zeros(trialCount, 1);
+		wmmse10Values = zeros(trialCount, 1);
+		ila10Values = zeros(trialCount, 1);
+		bruteValues = zeros(trialCount, 1);
+
+		for trial = 1:trialCount
+			H = (randn(userCount) + 1j * randn(userCount)) / sqrt(2);
+
+			oneShot = WMMSE_SISO(H, powerBudget, noiseVar, ones(userCount, 1), struct('maxIter', 80, 'tol', 1e-8, 'verbose', false));
+			wmmseValues(trial) = oneShot.sumRateBit;
+
+			bestValue = -inf;
+			for restart = 1:multistartCount
+				initPhase = 2 * pi * rand(userCount, 1);
+				multi = WMMSE_SISO(H, powerBudget, noiseVar, ones(userCount, 1), struct('maxIter', 80, 'tol', 1e-8, 'verbose', false, 'initPhase', initPhase));
+				bestValue = max(bestValue, multi.sumRateBit);
+			end
+			wmmse10Values(trial) = bestValue;
+
+			ilaValues(trial) = WMMSE_ILAProxySISO(H, powerBudget, noiseVar, ones(userCount, 1), 80, 1e-8, []);
+			bestIlaValue = -inf;
+			for restart = 1:multistartCount
+				initPhaseIla = 2 * pi * rand(userCount, 1);
+				ilaNow = WMMSE_ILAProxySISO(H, powerBudget, noiseVar, ones(userCount, 1), 80, 1e-8, initPhaseIla);
+				bestIlaValue = max(bestIlaValue, ilaNow);
+			end
+			ila10Values(trial) = bestIlaValue;
+
+			if withBruteforce
+				bruteValues(trial) = WMMSE_CoarseBruteforceSISO3(H, powerBudget, noiseVar, gridStep);
+			end
+		end
+
+		curves.wmmse(idx) = mean(wmmseValues);
+		curves.ila(idx) = mean(ilaValues);
+		curves.wmmse10(idx) = mean(wmmse10Values);
+		curves.ila10(idx) = mean(ila10Values);
+		if withBruteforce
+			curves.bruteforce(idx) = mean(bruteValues);
+		end
+	end
+end
+
+function curves = WMMSE_RunFig3Case(userCount, Nt, Nr, snrDbList, trialCount, multistartCount)
+	curves.wmmse = zeros(size(snrDbList));
+	curves.wmmse10 = zeros(size(snrDbList));
+	curves.ila = zeros(size(snrDbList));
+	curves.ila10 = zeros(size(snrDbList));
+	curves.mmse = zeros(size(snrDbList));
+
+	for idx = 1:numel(snrDbList)
+		snrLinear = 10^(snrDbList(idx) / 10);
+		powerBudget = snrLinear;
+		noiseVar = 1;
+
+		wmmseValues = zeros(trialCount, 1);
+		wmmse10Values = zeros(trialCount, 1);
+		ilaValues = zeros(trialCount, 1);
+		ila10Values = zeros(trialCount, 1);
+		mmseValues = zeros(trialCount, 1);
+
+		for trial = 1:trialCount
+			H = WMMSE_RandomChannelCell(userCount, Nr, Nt);
+			wmmse = WMMSE_MIMO_1stream(H, powerBudget, noiseVar, ones(userCount, 1), struct('maxIter', 60, 'tol', 1e-8, 'verbose', false));
+			wmmseValues(trial) = wmmse.sumRateBit;
+
+			bestWmmse = -inf;
+			bestIla = -inf;
+			for restart = 1:multistartCount
+				initV = WMMSE_RandomInitBeamformers(userCount, Nt, powerBudget);
+				wmmseRestart = WMMSE_MIMO_1stream(H, powerBudget, noiseVar, ones(userCount, 1), struct('maxIter', 60, 'tol', 1e-8, 'verbose', false, 'initBeamformers', {initV}));
+				bestWmmse = max(bestWmmse, wmmseRestart.sumRateBit);
+
+				ilaRestart = WMMSE_ILAProxyMimo(H, powerBudget, noiseVar, ones(userCount, 1), 60, 1e-6, initV);
+				bestIla = max(bestIla, ilaRestart);
+			end
+			wmmse10Values(trial) = bestWmmse;
+
+			ilaValues(trial) = WMMSE_ILAProxyMimo(H, powerBudget, noiseVar, ones(userCount, 1), 60, 1e-6, []);
+			ila10Values(trial) = bestIla;
+
+			mmseValues(trial) = WMMSE_MMSEBaselineMimo(H, powerBudget, noiseVar, ones(userCount, 1), 60, 1e-6);
+		end
+
+		curves.wmmse(idx) = mean(wmmseValues);
+		curves.wmmse10(idx) = mean(wmmse10Values);
+		curves.ila(idx) = mean(ilaValues);
+		curves.ila10(idx) = mean(ila10Values);
+		curves.mmse(idx) = mean(mmseValues);
+	end
+end
+
+function result = WMMSE_RunFig4CpuTime()
+	userCounts = 2:2:12;
+	Nt = 3;
+	Nr = 2;
+	repeatCount = 6;
+
+	wmmseTimes = zeros(size(userCounts));
+	ilaTimes = zeros(size(userCounts));
+
+	for idx = 1:numel(userCounts)
+		userCount = userCounts(idx);
+		powerBudget = 10;
+		noiseVar = 1;
+
+		wmmseAccum = 0;
+		ilaAccum = 0;
+
+		for trial = 1:repeatCount
+			H = WMMSE_RandomChannelCell(userCount, Nr, Nt);
+
+			tic;
+			WMMSE_MIMO_1stream(H, powerBudget, noiseVar, ones(userCount, 1), struct('maxIter', 20, 'tol', 1e-8, 'verbose', false));
+			wmmseAccum = wmmseAccum + toc;
+
+			tic;
+			WMMSE_ILAProxyMimo(H, powerBudget, noiseVar, ones(userCount, 1), 20, 1e-6, []);
+			ilaAccum = ilaAccum + toc;
+		end
+
+		wmmseTimes(idx) = wmmseAccum / repeatCount;
+		ilaTimes(idx) = ilaAccum / repeatCount;
+
+		figure(1003);
+		set(gcf, 'Name', 'Fig. 4 - Average CPU Time vs Number of Users', 'NumberTitle', 'off');
+		clf;
+		hold on;
+		plot(userCounts(1:idx), wmmseTimes(1:idx), '-o', 'LineWidth', 1.5);
+		plot(userCounts(1:idx), ilaTimes(1:idx), '-s', 'LineWidth', 1.5);
+		grid on;
+		xlabel('the number of users K');
+		ylabel('average CPU time(s)');
+		legend('WMMSE', 'ILA', 'Location', 'northwest', 'Interpreter', 'none');
+		title('Fig. 4: CPU time vs user count (T=3, R=2)');
+		drawnow;
+	end
+
+	result.userCounts = userCounts;
+	result.wmmseTimes = wmmseTimes;
+	result.ilaTimes = ilaTimes;
+end
+
+function sumRateBit = WMMSE_ILAProxySISO(H, P, noiseVar, alpha, maxIter, tol, initPhase)
+	K = size(H, 1);
+	Pvec = expandToVector(P, K, 'P');
+	noiseVec = expandToVector(noiseVar, K, 'noiseVar');
+	alphaVec = expandToVector(alpha, K, 'alpha');
+
+	optsLocal = struct();
+	optsLocal.initPhase = initPhase;
+	v = initializeBeamformers(Pvec, optsLocal);
+
+	prevRate = -inf;
+	for iter = 1:maxIter
+		for k = 1:K
+			[u, w, ~, ~] = updateReceiverAndWeight(H, v, noiseVec);
+			denom = 0;
+			for j = 1:K
+				denom = denom + alphaVec(j) * abs(H(j, k)).^2 * abs(u(j)).^2 * w(j);
+			end
+			numer = alphaVec(k) * conj(H(k, k)) * u(k) * w(k);
+			v(k) = WMMSE_ScalarPowerProjection(numer, denom, Pvec(k));
+		end
+
+		[~, ~, ~, rateNat] = updateReceiverAndWeight(H, v, noiseVec);
+		rateNow = sum(alphaVec .* (rateNat / log(2)));
+		if abs(rateNow - prevRate) <= tol
+			break;
+		end
+		prevRate = rateNow;
+	end
+
+	[~, ~, ~, rateNat] = updateReceiverAndWeight(H, v, noiseVec);
+	sumRateBit = sum(alphaVec .* (rateNat / log(2)));
+end
+
+function sumRateBit = WMMSE_ILAProxyMimo(H, P, noiseVar, alpha, maxIter, tol, initBeamformers)
+	K = size(H, 1);
+	if isscalar(P)
+		Pvec = repmat(P, K, 1);
+	else
+		Pvec = P(:);
+	end
+	if nargin < 7 || builtin('isempty', initBeamformers)
+		Nt = size(H{1, 1}, 2);
+		v = WMMSE_RandomInitBeamformers(K, Nt, Pvec);
+	else
+		v = initBeamformers;
+	end
+
+	prevRate = -inf;
+	for iter = 1:maxIter
+		for t = 1:K
+			u = cell(K, 1);
+			w = zeros(K, 1);
+			for r = 1:K
+				[J, desired] = WMMSE_ReceiverCovariance(H, v, r, noiseVar);
+				u{r} = J \ desired;
+				e = 1 - real(desired' * (J \ desired));
+				e = max(e, eps);
+				w(r) = 1 / e;
+			end
+
+			sampleChannel = H{1, t};
+			NtLocal = size(sampleChannel, 2);
+			A = zeros(NtLocal, NtLocal);
+			b = zeros(NtLocal, 1);
+			for r = 1:K
+				Hrt = H{r, t};
+				A = A + alpha(r) * (Hrt' * (u{r} * w(r) * u{r}') * Hrt);
+				if r == t
+					b = alpha(r) * (Hrt' * u{r} * w(r));
+				end
+			end
+			v{t} = WMMSE_SolvePowerConstrainedVector(A, b, Pvec(t));
+		end
+
+		rateNow = WMMSE_ComputeMimoSumRateBit(H, v, noiseVar);
+		if abs(rateNow - prevRate) <= tol
+			break;
+		end
+		prevRate = rateNow;
+	end
+
+	sumRateBit = WMMSE_ComputeMimoSumRateBit(H, v, noiseVar);
+end
+
+function v = WMMSE_RandomInitBeamformers(K, Nt, Pvec)
+	if isscalar(Pvec)
+		Pvec = repmat(Pvec, K, 1);
+	else
+		Pvec = Pvec(:);
+		if numel(Pvec) ~= K
+			error('Pvec must be a scalar or a K x 1 vector.');
+		end
+	end
+
+	v = cell(K, 1);
+	for k = 1:K
+		direction = randn(Nt, 1) + 1j * randn(Nt, 1);
+		direction = direction / norm(direction);
+		v{k} = sqrt(Pvec(k)) * direction;
+	end
+end
+
+function vScalar = WMMSE_ScalarPowerProjection(numer, denom, pMax)
+	if pMax <= 0 || abs(numer) <= 0
+		vScalar = 0;
+		return;
+	end
+
+	if denom <= 0
+		tmp = numer / eps;
+		if abs(tmp)^2 <= pMax
+			vScalar = tmp;
+			return;
+		end
+	end
+
+	mu = max(0, abs(numer) / sqrt(pMax) - denom);
+	vScalar = numer / (denom + mu);
+end
+
+function H = WMMSE_RandomChannelCell(K, Nr, Nt)
+	H = cell(K, K);
+	for r = 1:K
+		for t = 1:K
+			H{r, t} = (randn(Nr, Nt) + 1j * randn(Nr, Nt)) / sqrt(2);
+		end
+	end
+end
+
+function sumRateBit = WMMSE_MMSEBaselineMimo(H, P, noiseVar, alpha, maxIter, tol)
+	K = size(H, 1);
+	if isscalar(P)
+		P = repmat(P, K, 1);
+	end
+	if nargin < 6
+		tol = 1e-6;
+	end
+	if nargin < 5
+		maxIter = 50;
+	end
+	if nargin < 4 || builtin('isempty', alpha)
+		alpha = ones(K, 1);
+	end
+
+	v = cell(K, 1);
+	for k = 1:K
+		direct = H{k, k};
+		[~, ~, vSingular] = svd(direct, 'econ');
+		direction = vSingular(:, 1);
+		v{k} = sqrt(P(k)) * direction;
+	end
+
+	prevRate = -inf;
+	for iter = 1:maxIter
+		u = cell(K, 1);
+		for k = 1:K
+			[J, desired] = WMMSE_ReceiverCovariance(H, v, k, noiseVar);
+			u{k} = J \ desired;
+		end
+
+		for t = 1:K
+			sampleChannel = H{1, t};
+			NtLocal = size(sampleChannel, 2);
+			A = zeros(NtLocal, NtLocal);
+			b = zeros(NtLocal, 1);
+			for r = 1:K
+				Hrt = H{r, t};
+				A = A + alpha(r) * (Hrt' * (u{r} * u{r}') * Hrt);
+				if r == t
+					b = alpha(r) * (Hrt' * u{r});
+				end
+			end
+			v{t} = WMMSE_SolvePowerConstrainedVector(A, b, P(t));
+		end
+
+		rateNow = WMMSE_ComputeMimoSumRateBit(H, v, noiseVar);
+		if abs(rateNow - prevRate) <= tol
+			break;
+		end
+		prevRate = rateNow;
+	end
+	sumRateBit = WMMSE_ComputeMimoSumRateBit(H, v, noiseVar);
+end
+
+function x = WMMSE_SolvePowerConstrainedVector(A, b, powerBudget)
+	if powerBudget <= 0
+		x = zeros(size(b));
+		return;
+	end
+
+	eyeMat = eye(size(A));
+	x0 = (A + 1e-12 * eyeMat) \ b;
+	if real(x0' * x0) <= powerBudget
+		x = x0;
+		return;
+	end
+
+	lowerBound = 0;
+	upperBound = max(1, norm(b) / sqrt(powerBudget));
+	while real(((A + upperBound * eyeMat) \ b)' * ((A + upperBound * eyeMat) \ b)) > powerBudget
+		upperBound = 2 * upperBound;
+		if upperBound > 1e12
+			break;
+		end
+	end
+
+	for iter = 1:60
+		midpoint = 0.5 * (lowerBound + upperBound);
+		xMid = (A + midpoint * eyeMat) \ b;
+		if real(xMid' * xMid) > powerBudget
+			lowerBound = midpoint;
+		else
+			upperBound = midpoint;
+		end
+	end
+	x = (A + upperBound * eyeMat) \ b;
+end
+
+function sumRateBit = WMMSE_ComputeMimoSumRateBit(H, v, noiseVar)
+	K = numel(v);
+	sumRateNat = 0;
+	for k = 1:K
+		[J, desired] = WMMSE_ReceiverCovariance(H, v, k, noiseVar);
+		e = 1 - real(desired' * (J \ desired));
+		e = max(e, eps);
+		sumRateNat = sumRateNat + log(1 / e);
+	end
+	sumRateBit = sumRateNat / log(2);
+end
+
+function bestRateBit = WMMSE_CoarseBruteforceSISO3(H, P, noiseVar, gridStep)
+	fractionGrid = 0:gridStep:1;
+	bestRateNat = -inf;
+
+	for f1 = fractionGrid
+		for f2 = fractionGrid
+			f3 = 1 - f1 - f2;
+			if f3 < 0
+				continue;
+			end
+
+			powers = P * [f1; f2; f3];
+			v = zeros(3, 1);
+			for k = 1:3
+				if powers(k) > 0
+					v(k) = sqrt(powers(k)) * exp(-1j * angle(H(k, k)));
+				end
+			end
+
+			sumRateNat = 0;
+			for k = 1:3
+				signal = abs(H(k, k) * v(k))^2;
+				interference = 0;
+				for j = 1:3
+					if j ~= k
+						interference = interference + abs(H(k, j) * v(j))^2;
+					end
+				end
+				sinr = signal / max(interference + noiseVar, eps);
+				sumRateNat = sumRateNat + log(1 + sinr);
+			end
+
+			if sumRateNat > bestRateNat
+				bestRateNat = sumRateNat;
+			end
+		end
+	end
+
+	bestRateBit = bestRateNat / log(2);
+end
+
+function [J, desired] = WMMSE_ReceiverCovariance(H, v, receiverIndex, noisePow)
+	[Nr, ~] = size(H{1, 1});
+	J = noisePow * eye(Nr);
+	K = numel(v);
+	for t = 1:K
+		Hrt = H{receiverIndex, t};
+		J = J + Hrt * (v{t} * v{t}') * Hrt';
+	end
+	desired = H{receiverIndex, receiverIndex} * v{receiverIndex};
+end
+
+
+function opts = applyDefaults(opts)
+	if ~isfield(opts, 'maxIter') || builtin('isempty', opts.maxIter)
+		opts.maxIter = 200;
+	end
+	if ~isfield(opts, 'tol') || builtin('isempty', opts.tol)
+		opts.tol = 1e-6;
+	end
+	if ~isfield(opts, 'verbose') || builtin('isempty', opts.verbose)
+		opts.verbose = false;
+	end
+	if ~isfield(opts, 'initPhase')
+		opts.initPhase = [];
+	end
+end
+
+function x = expandToVector(x, K, name)
+	if isscalar(x)
+		x = repmat(x, K, 1);
+		return;
+	end
+
+	x = x(:);
+	if numel(x) ~= K
+		error('%s must be a scalar or a %d x 1 vector.', name, K);
+	end
+end
+
+function v = initializeBeamformers(P, opts)
+	K = numel(P);
+	if builtin('isempty', opts.initPhase)
+		phase = 2 * pi * rand(K, 1);
+	else
+		phase = opts.initPhase(:);
+		if numel(phase) ~= K
+			error('opts.initPhase must be a K x 1 vector.');
+		end
+	end
+	v = sqrt(P) .* exp(1j * phase);
+end
+
+function [u, w, sinr, rateNat] = updateReceiverAndWeight(H, v, noiseVar)
+	K = numel(v);
+	u = zeros(K, 1);
+	w = zeros(K, 1);
+	sinr = zeros(K, 1);
+	rateNat = zeros(K, 1);
+
+	power = abs(v).^2;
+	for k = 1:K
+		totalCov = sum(abs(H(k, :)).^2.' .* power) + noiseVar(k);
+		desired = H(k, k) * v(k);
+		u(k) = desired / totalCov;
+
+		desiredPower = abs(desired).^2;
+		interferencePlusNoise = totalCov - desiredPower;
+		mse = 1 - desiredPower / totalCov;
+		mse = max(real(mse), eps);
+
+		w(k) = 1 / mse;
+		sinr(k) = desiredPower / max(interferencePlusNoise, eps);
+		rateNat(k) = log(1 + sinr(k));
+	end
+end
+
+function v = updateTransmitBeamformers(H, u, w, alpha, P)
+	K = numel(P);
+	v = zeros(K, 1);
+
+	for k = 1:K
+		denomBase = 0;
+		for j = 1:K
+			denomBase = denomBase + alpha(j) * abs(H(j, k)).^2 * abs(u(j)).^2 * w(j);
+		end
+
+		numer = alpha(k) * conj(H(k, k)) * u(k) * w(k);
+
+		if P(k) <= 0 || abs(numer) <= 0
+			v(k) = 0;
+			continue;
+		end
+
+		if denomBase <= 0
+			vCand = numer / eps;
+			if abs(vCand)^2 <= P(k)
+				v(k) = vCand;
+				continue;
+			end
+		end
+
+		mu = max(0, abs(numer) / sqrt(P(k)) - denomBase);
+		vCand = numer / (denomBase + mu);
+
+		if abs(vCand)^2 > P(k) * (1 + 1e-12)
+			muLow = 0;
+			muHigh = max(1, denomBase + abs(numer) / sqrt(P(k)));
+			while abs(numer / (denomBase + muHigh))^2 > P(k)
+				muHigh = 2 * muHigh;
+				if muHigh > 1e12
+					break;
+				end
+			end
+			for inner = 1:60
+				muMid = 0.5 * (muLow + muHigh);
+				vMid = numer / (denomBase + muMid);
+				if abs(vMid)^2 > P(k)
+					muLow = muMid;
+				else
+					muHigh = muMid;
+				end
+			end
+			v(k) = numer / (denomBase + muHigh);
+		else
+			v(k) = vCand;
+		end
+	end
+end
