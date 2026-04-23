@@ -1,8 +1,8 @@
 ---
 title: 一种用于多输入多输出干扰广播信道分布式总效用最大化的迭代加权最小均方误差方法
-published: 2026-04-22
+published: 2026-04-23
 description: "本文是论文《An Iteratively Weighted MMSE Approach to Distributed Sum-Utility Maximization for a MIMO Interfering Broadcast Channel》的读书笔记"
-# image: "./cover.png"
+image: "./cover.png"
 tags: ["线性波束形成", "加权 MMSE", "文献阅读"]
 category: 科研学习
 draft: false
