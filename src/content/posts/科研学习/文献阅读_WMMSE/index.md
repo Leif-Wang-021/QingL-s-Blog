@@ -656,6 +656,7 @@ function result = WMMSE_MIMO(H, P, noiseVar, alpha, opts)
 end
 ```
 ## 仿真结果分析
+
 ### Fig. 1: 收敛性分析
 WMMSE_RunFig1Convergence 函数分别对 SISO (K=3) 和 MIMO (K=4, T=3, R=2) 场景进行固定迭代次数的仿真，记录每次迭代的加权和速率。
 ```matlab
@@ -749,7 +750,7 @@ Fig. 3 展示了 MIMO 场景下的算法性能：
 - WMMSE 与 ILA 性能相当，验证了算法的正确性
 - 在大规模 MIMO 系统（K=10）中，WMMSE 仍能保持良好性能
 - 小规模系统（K=3）的绝对速率更高，符合预期
-## Fig. 4: CPU 时间 vs 用户数
+### Fig. 4: CPU 时间 vs 用户数
 WMMSE_RunFig4CpuTime 函数测量不同用户数（5-30）下 WMMSE 和 ILA 算法的平均 CPU 时间。
 ```matlab
 function result = WMMSE_RunFig4CpuTime()
