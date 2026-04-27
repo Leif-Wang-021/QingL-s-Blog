@@ -8,7 +8,7 @@ category: 科研学习
 draft: false
 ---
 
-本文是论文《An Iteratively Weighted MMSE Approach to Distributed Sum-Utility Maximization for a MIMO Interfering Broadcast Channel》的读书笔记，并尝试复现了文中的算法。
+本文是论文《An Iteratively Weighted MMSE Approach to Distributed Sum-Utility Maximization for a MIMO Interfering Broadcast Channel》的学习笔记，并尝试复现了文中的算法。
 
 # 摘要
 
