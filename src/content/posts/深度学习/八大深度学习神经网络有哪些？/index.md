@@ -3,8 +3,8 @@ title: 八大深度学习神经网络有哪些？
 published: 2026-04-30
 description: "本文梳理 FNN、CNN、RNN、LSTM、GRU、GAN、Autoencoder 与 Transformer 的基本原理、适用任务、核心区别，并总结其在无线通信中的典型应用。"
 image: "./cover.avif"
-tags: ["深度学习", "神经网络", "无线通信"]
-category: 科研学习
+tags: ["神经网络", "深度学习模型", "模型综述", "无线通信"]
+category: 深度学习
 draft: false
 ---
 
