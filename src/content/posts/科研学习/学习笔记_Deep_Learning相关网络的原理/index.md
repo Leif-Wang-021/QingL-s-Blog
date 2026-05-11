@@ -1,5 +1,5 @@
 ---
-title: 深度学习常见网络原理与通信应用
+title: 八大深度学习神经网络有哪些？
 published: 2026-04-30
 description: "本文梳理 FNN、CNN、RNN、LSTM、GRU、GAN、Autoencoder 与 Transformer 的基本原理、适用任务、核心区别，并总结其在无线通信中的典型应用。"
 image: "./cover.avif"
