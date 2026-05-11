@@ -1,9 +1,9 @@
 ---
 title: 如何搭建深度学习 Python 环境？
 published: 2026-05-11
-description: ""
+description: "记录从零搭建深度学习 Python 环境的过程，包括 Python 与 VSCode 的作用、.venv 与 conda 的区别、Anaconda 环境管理、基础库安装与 PyTorch GPU 验证。"
 image: "./cover.png"
-tags: []
+tags: [Python, Anaconda, conda, VSCode, PyTorch, 环境配置]
 category: 深度学习
 draft: false
 ---
