@@ -1,9 +1,9 @@
 ---
 title: 如何搭建深度学习 Python 环境？
 published: 2026-05-11
-description: "记录从零搭建深度学习 Python 环境的过程，包括 Python 与 VSCode 的作用、.venv 与 conda 的区别、Anaconda 环境管理、基础库安装与 PyTorch GPU 验证。"
+description: "本文记录我在 Windows 下从零搭建深度学习 Python 环境的过程，梳理 Python、Anaconda/conda、基础库安装、PyTorch 配置与 GPU 验证等内容。"
 image: "./cover.png"
-tags: [Python, Anaconda, conda, VSCode, PyTorch, 环境配置]
+tags: ["Python", "Anaconda", "环境配置"]
 category: 深度学习
 draft: false
 ---
@@ -13,6 +13,8 @@ draft: false
 作为一个电子信息类专业硬件方向的学生，初次接触深度学习与通信算法实在十分头大。( ´•̥̥̥ω•̥̥̥｀ )非常感谢知乎博主[咖啡因是恶魔](https://www.zhihu.com/people/dong-ye-zi-icycoconut)的教程[《我该干啥》之新手如何入门深度学习](https://zhuanlan.zhihu.com/p/27337809985)，让我对深度学习的入门与环境搭建有了一个非常直观的理解。
 
 根据大佬的教程，我完成了 Python 环境的搭建，并在 VSCode 中安装了相应插件，完成了部分代码的调试。
+
+本文仅表达个人见解，可能会有错误，欢迎指正交流。:)
 
 # 深度学习为什么要使用 Python？
 

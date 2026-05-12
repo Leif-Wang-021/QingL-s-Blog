@@ -10,6 +10,8 @@ draft: false
 
 本文是论文《An Iteratively Weighted MMSE Approach to Distributed Sum-Utility Maximization for a MIMO Interfering Broadcast Channel》的学习笔记，并尝试复现了文中的算法。
 
+本文仅表达个人见解，可能会有错误，欢迎指正交流。:)
+
 # 摘要
 
 这篇论文的目标是：在多个天线阵列同时发射、且存在严重互相干扰的广播网络中，通过联合设计发射和接收滤波器，在“增强期望信号”与“抑制对别人的干扰”之间达成最优平衡，从而最大化整个系统的总通信速率。
@@ -39,7 +41,7 @@ draft: false
 当场景切换到 SINR 时，干扰 $I$ 出现了。在这个网络里，我们假设有两个用户在同时发射信号（各自功率为 $P_1$ 和 $P_2$），那么系统的总速率（Sum-Rate）就变成了：$$R_{sum} = \log_2\left(1 + \frac{P_1}{P_2 + N}\right) + \log_2\left(1 + \frac{P_2}{P_1 + N}\right)$$
 - 物理场景：现在不再是调一台功放，而是在调试一个极其复杂的混合信号音频系统，其中多个功放阵列靠得很近，而且空间电磁屏蔽没做好。当把通道 1 的功率 $P_1$ 拧大时，通道 1 的声音确实更响了；但泄露出去的能量立刻变成了通道 2 的底噪，把通道 2 的信号给淹没了！这就相当于，你的变量 $P_1$ 既在自己公式的分子上，又在别人公式的分母上。
 - 数学特性（非凸）：当变量同时出现在分式上下，外面还套着对数相加时，这个三维曲面就“扭曲”了。它不再是一个平滑的圆顶，而是变成了一个像马鞍或者连绵山脉一样的形状。这在数学上叫非凸。
-- 算法体验：如果算法试图在这个非凸地形里寻找最高点，它极容易找到一个局部最优解，比如通道 1 极大、通道 2 被彻底压死，而无法找不到真正全局最优解。
+- 算法体验：如果算法试图在这个非凸地形里寻找最高点，它极容易找到一个局部最优解，比如通道 1 极大、通道 2 被彻底压死，而不是找到真正的全局最优解。
 
 ## 基于迭代最小化加权均方误差（MSE）
 
@@ -349,12 +351,12 @@ $$
 
 所有 $i_{k}$ 的发射波束形成器 $V_{i_{k}}$ 更新也可按发射机解耦，得到：
 $$
-\begin{aligned} \min_{\{V_{i_{k}}\}_{i=1}^{I_{k}}} &\sum_{i=1}^{I_{k}}Tr(\alpha_{i_{k}}W_{i_{k}}(I-U_{i_{k}}^{H}H_{i_{k}k}V_{i_{k}})(I-U_{i_{k}}^{H}H_{i_{k}k}V_{i_{k}})^{H}) \\ \text{s.t. } &\sum_{i=1}^{I_{k}}Tr(V_{i_{k}}V_{i_{k}}^{H})\le P_{k}. [cite_start]\quad \text{(14)} \end{aligned}
+\begin{aligned} \min_{\{V_{i_{k}}\}_{i=1}^{I_{k}}} &\sum_{i=1}^{I_{k}}Tr(\alpha_{i_{k}}W_{i_{k}}(I-U_{i_{k}}^{H}H_{i_{k}k}V_{i_{k}})(I-U_{i_{k}}^{H}H_{i_{k}k}V_{i_{k}})^{H}) \\ \text{s.t. } &\sum_{i=1}^{I_{k}}Tr(V_{i_{k}}V_{i_{k}}^{H})\le P_{k}. \quad \text{(14)} \end{aligned}
 $$
 
 固定 $U$ 和 $W$ 后，发射端的优化会变成一个凸二次问题，可用标准凸优化算法求解。事实上，通过拉格朗日乘子法可得闭式解。令 $\mu_{k}$ 为发射机 $k$ 功率约束对应的拉格朗日乘子，构造拉格朗日函数：
 $$
-\begin{aligned} L(\{V_{i_{k}}\}_{i=1}^{I_{k}},\mu_{k}) \triangleq &\sum_{i=1}^{I_{k}}Tr(\alpha_{i_{k}}W_{i_{k}}(I-U_{i_{k}}^{H}H_{i_{k}k}V_{i_{k}})(I-U_{i_{k}}^{H}H_{i_{k}k}V_{i_{k}})^{H}) \\ &+ \sum_{i=1}^{I_{k}}\sum_{(l,j)\ne(i,k)}Tr(\alpha_{lj}W_{lj}U_{lj}^{H}H_{ljk}V_{i_{k}}V_{i_{k}}^{H}H_{ljk}^{H}U_{lj}^{H}) \\ &+ \mu_{k}\left(\sum_{i=1}^{I_{k}}Tr(V_{i_{k}}V_{i_{k}}^{H})-P_{k}\right). [cite_start]\end{aligned}
+\begin{aligned} L(\{V_{i_{k}}\}_{i=1}^{I_{k}},\mu_{k}) \triangleq &\sum_{i=1}^{I_{k}}Tr(\alpha_{i_{k}}W_{i_{k}}(I-U_{i_{k}}^{H}H_{i_{k}k}V_{i_{k}})(I-U_{i_{k}}^{H}H_{i_{k}k}V_{i_{k}})^{H}) \\ &+ \sum_{i=1}^{I_{k}}\sum_{(l,j)\ne(i,k)}Tr(\alpha_{lj}W_{lj}U_{lj}^{H}H_{ljk}V_{i_{k}}V_{i_{k}}^{H}H_{ljk}^{H}U_{lj}^{H}) \\ &+ \mu_{k}\left(\sum_{i=1}^{I_{k}}Tr(V_{i_{k}}V_{i_{k}}^{H})-P_{k}\right). \end{aligned}
 $$
 
 对 $V_{i_k}$ 求一阶最优条件，最后会变成一个线性方程：
@@ -390,7 +392,7 @@ $\sum_{j=1}^{K}\sum_{l=1}^{I_{j}}H_{l_{j}k}^{H}U_{l_{j}}W_{l_{j}}U_{l_{j}}^{H}H_
 $\Phi=D^{H}\left(\sum_{i=1}^{I_{k}}\alpha_{i_{k}}^{2}H_{i_{k}k}^{H}U_{i_{k}}W_{i_{k}}^{2}U_{i_{k}}^{H}H_{i_{k}k}\right)D$。
 令 $[X]_{mm}$ 表示矩阵 $X$ 的第 $m$ 个对角元素，则 (17) 化为：
 $$
-\sum_{m=1}^{M_{k}}\frac{[\Phi]_{mm}}{([\Lambda]_{mm}+\mu_{k})^{2}}=P_{k}. [cite_start]\quad \text{(18)}
+\sum_{m=1}^{M_{k}}\frac{[\Phi]_{mm}}{([\Lambda]_{mm}+\mu_{k})^{2}}=P_{k}. \quad \text{(18)}
 $$
 
 注意此时最优 $\mu_{k}$（记为 $\mu_{k}^{*}$）必为正，且 (18) 左端在 $\mu_{k}>0$ 时单调递减。因此可通过一维搜索（如二分法）高效求解。将 $\mu_{k}^{*}$ 代回 (15) 即得所有 $i=1,...,I_{k}$ 的 $V_{i_{k}}(\mu_{k}^{*})$。
@@ -427,8 +429,8 @@ $$
 $$
 Tr(\nabla_{U_{i_{k}}}\psi_{1}(W^{*},U^{*},V^{*})^{H}(U_{i_{k}}-U_{i_{k}}^{*}))\le0, \quad \forall U_{i_{k}}, \forall i_{k} \quad \text{(24)}
 $$
-$$T
-r(\nabla_{W_{i_{k}}}\psi_{1}(W^{*},U^{*},V^{*})^{H}(W_{i_{k}}-W_{i_{k}}^{*}))\le0, \quad \forall W_{i_{k}}, \forall i_{k} \quad \text{(25)}
+$$
+Tr(\nabla_{W_{i_{k}}}\psi_{1}(W^{*},U^{*},V^{*})^{H}(W_{i_{k}}-W_{i_{k}}^{*}))\le0, \quad \forall W_{i_{k}}, \forall i_{k} \quad \text{(25)}
 $$
 $$
 Tr(\nabla_{V}\psi_{1}(W^{*},U^{*},V^{*})^{H}(V-V^{*}))\le0, \quad \forall V\in\mathbb{S} \quad \text{(26)}
