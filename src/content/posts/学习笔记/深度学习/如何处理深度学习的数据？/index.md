@@ -1,11 +1,17 @@
 ---
-title: 如何处理深度学习的数据？
+title: 如何处理深度学习的数据？(深度学习P3)
 published: 2026-05-12
 description: "本文梳理深度学习数据处理中的数据描述、tensor、shape、数据清洗、Dataset、DataLoader、数据增强和数据集划分等基础概念。"
 image: "./cover.avif"
 tags: ["PyTorch", "Tensor", "数据处理"]
-category: 深度学习
+category: 学习笔记
 draft: false
+---
+
+>[八大深度学习神经网络有哪些？(深度学习P1)](../八大深度学习神经网络有哪些/)  
+>[如何搭建深度学习 Python 环境？(深度学习P2)](../如何搭建深度学习python环境/)  
+>[如何处理深度学习的数据？(深度学习P3)](../如何处理深度学习的数据/)  
+
 ---
 
 本文参考知乎博主[咖啡因是恶魔](https://www.zhihu.com/people/dong-ye-zi-icycoconut)的教程[《我该干啥》之新手如何入门深度学习](https://zhuanlan.zhihu.com/p/27337809985)，整理深度学习中“数据处理”这一部分的基础概念。

@@ -1,13 +1,18 @@
 ---
-title: 如何搭建深度学习 Python 环境？
+title: 如何搭建深度学习 Python 环境？(深度学习P2)
 published: 2026-05-11
 description: "本文记录我在 Windows 下从零搭建深度学习 Python 环境的过程，梳理 Python、Anaconda/conda、基础库安装、PyTorch 配置与 GPU 验证等内容。"
 image: "./cover.png"
 tags: ["Python", "Anaconda", "环境配置"]
-category: 深度学习
+category: 学习笔记
 draft: false
 ---
 
+>[八大深度学习神经网络有哪些？(深度学习P1)](../八大深度学习神经网络有哪些/)  
+>[如何搭建深度学习 Python 环境？(深度学习P2)](../如何搭建深度学习python环境/)  
+>[如何处理深度学习的数据？(深度学习P3)](../如何处理深度学习的数据/)  
+
+---
 # 开始
 
 作为一个电子信息类专业硬件方向的学生，初次接触深度学习与通信算法实在十分头大。( ´•̥̥̥ω•̥̥̥｀ )非常感谢知乎博主[咖啡因是恶魔](https://www.zhihu.com/people/dong-ye-zi-icycoconut)的教程[《我该干啥》之新手如何入门深度学习](https://zhuanlan.zhihu.com/p/27337809985)，让我对深度学习的入门与环境搭建有了一个非常直观的理解。
