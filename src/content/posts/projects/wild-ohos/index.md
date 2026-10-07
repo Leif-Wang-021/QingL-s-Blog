@@ -1,8 +1,8 @@
 ---
-title: "wild 鸿蒙版：轻小说阅读与离线体验优化"
+title: "wild 鸿蒙版（01）：项目介绍"
 published: 2026-10-07
 description: "介绍 wild 非官方鸿蒙分支的阅读功能、本地缓存、离线目录与下载恢复，并提供源码和 HAP 下载入口。"
-tags: ["wild", "轻小说", "Flutter", "HarmonyOS"]
+tags: ["鸿蒙应用","轻小说阅读","Flutter","HarmonyOS"]
 category: 软件项目
 draft: false
 lang: zh_CN

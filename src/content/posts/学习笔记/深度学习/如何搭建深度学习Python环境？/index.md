@@ -3,7 +3,7 @@ title: "深度学习入门（02）：Windows 下的 Python 与 PyTorch 环境配
 published: 2026-05-11
 description: "记录 Windows 下的 Python 与 conda 环境配置、基础依赖安装和 PyTorch GPU 验证过程。"
 image: "./cover.png"
-tags: ["深度学习", "Python", "PyTorch", "环境配置"]
+tags: ["深度学习","环境配置","Python","PyTorch"]
 category: 学习笔记
 draft: false
 updated: 2026-10-07

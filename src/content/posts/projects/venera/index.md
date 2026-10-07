@@ -1,13 +1,13 @@
 ---
-title: "Venera 优化版：漫画下载优化与鸿蒙移植"
+title: "Venera 鸿蒙版（01）：项目介绍"
 published: 2026-10-07
 description: "介绍 Venera 个人维护分支的下载调度、失败恢复、压缩导出与鸿蒙适配，并提供源码和安装包入口。"
-tags: ["Venera", "漫画", "Flutter", "HarmonyOS"]
+tags: ["鸿蒙应用","漫画阅读","Flutter","HarmonyOS"]
 category: 软件项目
 draft: false
 lang: zh_CN
 updated: 2026-10-07
-series: "Venera"
+series: "Venera 鸿蒙版"
 seriesOrder: 1
 ---
 

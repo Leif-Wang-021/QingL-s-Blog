@@ -3,7 +3,7 @@ title: "通信 AI 阅读笔记：业务框架与研究方向"
 published: 2026-06-10
 description: "从通信业务框架出发整理 AI 的应用方向，并记录个人学习重点与后续研究考虑。"
 image: "./cover.png"
-tags: ["无线通信", "通信 AI", "5G/6G"]
+tags: ["无线通信","通信 AI","5G","6G"]
 category: 文献阅读
 draft: false
 updated: 2026-10-07

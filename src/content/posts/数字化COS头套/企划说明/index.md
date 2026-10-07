@@ -3,7 +3,7 @@ title: "数字化 COS 头套（01）：需求分析与方案规划"
 published: 2026-05-06
 description: "记录数字化 COS 头套的需求与初步方案，围绕表情屏、摄像头视野、模块化结构、通风和主控选型展开。"
 image: "./cover.png"
-tags: ["COS", "可穿戴设备", "树莓派", "近眼显示"]
+tags: ["可穿戴设备","近眼显示","COS","树莓派"]
 category: 硬件项目
 draft: false
 updated: 2026-10-07

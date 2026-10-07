@@ -3,7 +3,7 @@ title: "STM32 音频系统（01）：PWM 扫频实现与测量"
 published: 2026-04-16
 description: "记录 STM32F103C8T6 的 TIM1 配置、ARR 与 CCR 更新逻辑，以及 35–45 kHz PWM 扫频范围的测量。"
 image: "./cover.png"
-tags: ["STM32", "PWM", "扫频", "毕业设计"]
+tags: ["嵌入式开发","扫频","STM32","PWM"]
 category: 硬件项目
 draft: false
 updated: 2026-10-07

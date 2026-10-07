@@ -3,7 +3,7 @@ title: "深度学习入门（03）：Tensor、数据加载与数据集划分"
 published: 2026-05-12
 description: "串联数据描述、Tensor 与 shape、数据清洗、Dataset、DataLoader、数据增强和数据集划分。"
 image: "./cover.avif"
-tags: ["深度学习", "PyTorch", "Tensor", "数据处理"]
+tags: ["深度学习","数据处理","PyTorch","张量"]
 category: 学习笔记
 draft: false
 updated: 2026-10-07

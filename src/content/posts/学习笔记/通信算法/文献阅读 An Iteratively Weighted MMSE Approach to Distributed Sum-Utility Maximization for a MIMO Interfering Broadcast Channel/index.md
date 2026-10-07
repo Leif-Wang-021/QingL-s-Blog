@@ -3,7 +3,7 @@ title: "WMMSE 阅读笔记：算法理解与 MATLAB 实验"
 published: 2026-04-23
 description: "整理 WMMSE 的问题背景、迭代思路和 MATLAB 学习实验，区分论文结论与个人实现。"
 image: "./cover.png"
-tags: ["无线通信", "WMMSE", "波束成形", "MATLAB"]
+tags: ["无线通信","波束成形","WMMSE","MATLAB"]
 category: 文献阅读
 draft: false
 updated: 2026-10-07

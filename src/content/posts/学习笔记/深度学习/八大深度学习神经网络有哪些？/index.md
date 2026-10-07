@@ -3,7 +3,7 @@ title: "深度学习入门（01）：八类常见神经网络"
 published: 2026-04-30
 description: "梳理八类常见神经网络的原理、适用任务与区别，并建立它们与无线通信任务的对应关系。"
 image: "./cover.avif"
-tags: ["深度学习", "神经网络", "无线通信"]
+tags: ["深度学习","无线通信","神经网络"]
 category: 学习笔记
 draft: false
 updated: 2026-10-07

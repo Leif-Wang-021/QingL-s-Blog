@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { stringify } from "yaml";
+import { normalizeTags } from "./content-tags.js";
 
 const root = fileURLToPath(new URL("../src/content/posts/", import.meta.url));
 const categories = {
@@ -39,7 +40,7 @@ const outlines = {
 const args = process.argv.slice(2).filter((arg) => arg !== "--");
 if (!args.length || args.includes("--help")) {
 	console.log(
-		'用法：pnpm new-post <目录名> --type learning|paper|hardware|software --title "文章标题" --series "系列名" --order 1 [--dry-run]',
+		'用法：pnpm new-post <目录名> --type learning|paper|hardware|software --title "文章标题" --series "系列名" --order 1 --tags "标签1,标签2" [--dry-run]',
 	);
 	process.exit(args.length ? 0 : 1);
 }
@@ -53,7 +54,7 @@ try {
 			continue;
 		}
 		if (
-			!["--type", "--title", "--series", "--order"].includes(name) ||
+			!["--type", "--title", "--series", "--order", "--tags"].includes(name) ||
 			!args[i + 1] ||
 			args[i + 1].startsWith("--")
 		)
@@ -89,11 +90,17 @@ try {
 		day: "2-digit",
 	}).format(new Date());
 	const metadata = {
-		title: options["--title"] ?? path.basename(directory),
+		title:
+			options["--title"] ??
+			(type === "software" && options["--series"] && order === 1
+				? `${options["--series"]}（01）：项目介绍`
+				: path.basename(directory)),
 		published: today,
 		description: "",
 		image: "",
-		tags: [],
+		tags: options["--tags"]
+			? normalizeTags(options["--tags"].split(/[,，]/))
+			: [],
 		category: categories[type],
 		series: options["--series"] ?? "",
 		seriesOrder: options["--series"] ? order : undefined,

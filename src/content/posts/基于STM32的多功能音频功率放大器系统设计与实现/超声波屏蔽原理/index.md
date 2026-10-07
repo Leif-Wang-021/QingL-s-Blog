@@ -3,7 +3,7 @@ title: "STM32 音频系统（02）：超声波录音干扰实验与原理"
 published: 2026-04-17
 description: "记录 STM32 PWM 扫频与 LM1875 放大电路的实验方案，整理麦克风非线性与采样混叠的机理解释及验证边界。"
 image: "./cover.png"
-tags: ["STM32", "超声波", "功率放大", "毕业设计"]
+tags: ["嵌入式开发","超声波","功率放大","STM32"]
 category: 硬件项目
 draft: false
 updated: 2026-10-07

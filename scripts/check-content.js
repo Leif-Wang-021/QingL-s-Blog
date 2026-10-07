@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseDocument } from "yaml";
+import { normalizeTags } from "./content-tags.js";
 
 const root = fileURLToPath(new URL("../src/content/posts/", import.meta.url));
 const allowed = new Set(["学习笔记", "文献阅读", "硬件项目", "软件项目"]);
@@ -79,6 +80,25 @@ for (const file of walk(root)) {
 		new Set(data.tags).size !== data.tags.length
 	)
 		fail("请使用 2–5 个非空且不重复的标签");
+	if (
+		Array.isArray(data.tags) &&
+		data.tags.every((tag) => typeof tag === "string")
+	) {
+		try {
+			const canonical = normalizeTags(data.tags);
+			if (JSON.stringify(data.tags) !== JSON.stringify(canonical))
+				fail(`标签名称或顺序不规范，建议：${canonical.join("、")}`);
+		} catch (error) {
+			fail(error.message);
+		}
+	}
+	if (
+		data.category === "软件项目" &&
+		data.series &&
+		data.seriesOrder === 1 &&
+		data.title !== `${data.series}（01）：项目介绍`
+	)
+		fail("软件项目首次介绍标题应为“系列名（01）：项目介绍”");
 	if (data.series) {
 		if (typeof data.series !== "string" || data.series !== data.series.trim())
 			fail("系列名需为无首尾空格的文本");
