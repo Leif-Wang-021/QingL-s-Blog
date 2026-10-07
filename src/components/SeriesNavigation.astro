@@ -1,0 +1,33 @@
+---
+import { getSeriesAnchor, getSeriesList } from "@utils/series-utils";
+import { getPostUrlBySlug, url } from "@utils/url-utils";
+
+interface Props {
+	name: string;
+	currentSlug: string;
+}
+const { name, currentSlug } = Astro.props;
+const group = (await getSeriesList()).find((series) => series.name === name);
+const posts = group?.posts ?? [];
+const current = posts.findIndex((post) => post.slug === currentSlug);
+const previous = posts[current - 1];
+const next = current >= 0 ? posts[current + 1] : undefined;
+---
+{group && <nav aria-label={`${name}系列导航`} class="rounded-xl bg-black/5 dark:bg-white/5 p-4 mb-6 text-75">
+    <div class="flex flex-wrap justify-between gap-2 mb-3">
+        <span class="font-bold">系列：{name}</span>
+        <a class="text-[var(--primary)]" href={`${url("/series/")}#${getSeriesAnchor(name)}`}>全部系列</a>
+    </div>
+    <ol class="space-y-2">
+        {posts.map((post) => <li>
+            <a href={getPostUrlBySlug(post.slug)} aria-current={post.slug === currentSlug ? "page" : undefined}
+                class:list={["block rounded-lg px-3 py-2 break-words", post.slug === currentSlug ? "bg-[var(--primary)]/10 font-bold" : "hover:bg-black/5 dark:hover:bg-white/5"]}>
+                {post.data.title}{post.slug === currentSlug && <span class="text-sm ml-2">（当前篇）</span>}
+            </a>
+        </li>)}
+    </ol>
+    {(previous || next) && <div class="flex flex-col sm:flex-row justify-between gap-3 mt-3 text-sm">
+        {previous && <a href={getPostUrlBySlug(previous.slug)}>上一篇：{previous.data.title}</a>}
+        {next && <a href={getPostUrlBySlug(next.slug)}>下一篇：{next.data.title}</a>}
+    </div>}
+</nav>}

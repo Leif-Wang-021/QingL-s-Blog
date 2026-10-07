@@ -1,34 +1,39 @@
 ---
-title: 如何使用单片机实现扫频？
+title: "STM32 音频系统（01）：PWM 扫频实现与测量"
 published: 2026-04-16
-description: "本文记录如何使用 STM32F103C8T6 开发板，通过动态修改 TIM1 的 ARR 和 CCR 实现 35kHz - 45kHz PWM 扫频。"
+description: "记录 STM32F103C8T6 的 TIM1 配置、ARR 与 CCR 更新逻辑，以及 35–45 kHz PWM 扫频范围的测量。"
 image: "./cover.png"
-tags: ["STM32", "扫频", "毕业设计"]
-category: 基于STM32的多功能音频功率放大器系统设计与实现
+tags: ["STM32", "PWM", "扫频", "毕业设计"]
+category: 硬件项目
 draft: false
+updated: 2026-10-07
+series: "STM32 音频系统"
+seriesOrder: 1
+lang: zh_CN
 ---
 
-# Hi
+## 目标与实验范围
 
-我是，青叶，这是我的第一篇博客。在这篇博客中，我将记录我在毕业设计中实现扫频功能的过程，核心需求是利用 STM32F103C8T6 产生一段 35kHz - 45kHz 的高频 PWM 波，并且要求以 1kHz 的调制频率进行三角波扫频（即 1ms 内完成一次 35k->45k->35k 的循环）。
+这是我在毕业设计中实现扫频信号源的记录。目标是用 STM32F103C8T6 产生 35–45 kHz 的 PWM 波，并以 1 kHz 的调制频率进行三角波扫频，即在 1 ms 内完成一次 35 kHz → 45 kHz → 35 kHz 的循环。
 
-本文仅表达个人见解，可能会有错误，欢迎指正交流。:)
+本文记录定时器配置、扫频代码和频率范围测量。1 ms 是设计目标；下文的空转延时需要进一步标定，现有记录尚不足以确认扫频周期精确达到该值。
 
-# 环境搭建
 
-在开发过程中我使用的是 **VSCode与STM32CubeMX** 的组合，使用 STM32CubeMX 进行可视化的引脚配置，使用 VSCode 进行代码编写。我先前也接触过 STM32CubeIDE ，但在 2.0.0 版本后， STM32CubeIDE **移除**了内置的 STM32CubeMX ，仍需要在外部先由 STM32CubeMX 进行配置，因此我选择了 VSCode 作为我的主要开发环境。在配置完成后， VSCode 中添加了 STM32 的插件，并借助 VSCode 强大的插件功能，进行代码编写。
+## 环境搭建
 
-## 搭建教程
+在开发过程中我使用的是 **VS Code与STM32CubeMX** 的组合，使用 STM32CubeMX 进行可视化的引脚配置，使用 VS Code 进行代码编写。我先前也接触过 STM32CubeIDE ，但在 2.0.0 版本后， STM32CubeIDE **移除**了内置的 STM32CubeMX ，仍需要在外部先由 STM32CubeMX 进行配置，因此我选择了 VS Code 作为我的主要开发环境。在配置完成后， VS Code 中添加了 STM32 的插件，并借助 VS Code 强大的插件功能，进行代码编写。
+
+### 搭建教程
 
 我参照了 [keysking](https://space.bilibili.com/6100925) 在 Bilibili 的教程，进行了整个开发环境的搭建。
 
 <iframe width="100%" height="468" src="//player.bilibili.com/player.html?isOutside=true&aid=115032427859038&bvid=BV1QfbpzGENy&cid=31715296031&p=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
 
-# 扫频的实现
+## 扫频的实现
 
-扫频的实现是通过动态修改底层定时器的自动重装载寄存器（ARR）和比较寄存器（CCR）来实现的。由于我们的目标频率是超声波频段，STM32 处理起来游刃有余，但由于调制周期极短（1ms），这给代码的延时控制带来了一定的挑战。
+扫频通过动态更新定时器的自动重装载寄存器（ARR）和比较寄存器（CCR）实现。ARR 决定每一步的 PWM 频率，寄存器更新节奏决定完整扫描所需的时间。
 
-## 核心原理与参数推导
+### 核心原理与参数推导
 
 STM32 产生 PWM 依赖于定时器。我们已知系统主频（SYSCLK）通常配置为最高速度 72MHz。计算 PWM 频率的核心公式如下：
 
@@ -41,11 +46,11 @@ $$\large Frequency = \frac{SYSCLK}{(PSC + 1) \times (ARR + 1)}$$
 
 所以，“扫频”的本质，就是在代码的死循环中，让 ARR 的值在 2056 到 1599 之间来回变化，同时保持 CCR = ARR / 2 使得占空比始终稳定在 50%。
 
-## CubeMX 硬件配置
+### CubeMX 硬件配置
 
 由于完全剥离了 IDE 内部集成，我们直接在独立的 STM32CubeMX 中进行初始化配置：
 
-- 防锁死配置：在 System Core -> SYS 中，Debug 务必选择 Serial Wire。**这非常重要，否则烧录一次后引脚会被占用，导致单片机变砖**。
+- 调试接口配置：在 System Core → SYS 中选择 Serial Wire，以保留本实验使用的 SWD 调试接口。后续修改引脚配置时，也应检查是否影响调试连接。
 
 ![SYS配置](./SYS配置.png)
 
@@ -58,16 +63,15 @@ $$\large Frequency = \frac{SYSCLK}{(PSC + 1) \times (ARR + 1)}$$
 
 ![定时器配置](./定时器配置.png)
 
-- 在 Project Manager 中，**Toolchain / IDE 选项必须下拉选择 CMake**，并勾选“Copy only the necessary library files”。这是打通 VSCode 编译环境的核心前提。这里与 STM32CubeIDE 的配置有较大差异，务必注意。
+- 在 Project Manager 中，**Toolchain / IDE 选项必须下拉选择 CMake**，并勾选“Copy only the necessary library files”。这是打通 VS Code 编译环境的核心前提。这里与 STM32CubeIDE 的配置有较大差异，务必注意。
 
 ![IDE配置](./IDE配置.png)
 
-## 核心代码
+### 核心代码
 
-在编写延时逻辑时，HAL 库的延时函数平时常用的 HAL_Delay() 函数最小精度是 1 毫秒，在这里完全失效了。如果每次循环改变 1 个 ARR 的值，根本来不及在 0.5ms 内跑完几百步。因此，必须采用粗化步进 + 微秒级空转的策略。
+在当前配置下，`HAL_Delay()` 使用毫秒级延时，不能直接用于安排半个扫频周期内的多次更新。本文先采用较大的 ARR 步进和空转延时进行验证。空转耗时会受到编译优化、指令开销等因素影响，需要通过测量确认。
 
 需求要求完成 35kHz 到 45kHz 的三角波扫频，且周期为 1ms。这意味着上升段（35k->45k）和下降段（45k->35k）各自只有 0.5ms (500us) 的执行时间。
-
 
 
 在 main.c 中，启动 PWM 并写入扫频逻辑：
@@ -103,7 +107,7 @@ $$\large Frequency = \frac{SYSCLK}{(PSC + 1) \times (ARR + 1)}$$
 
 ```
 
-# 示波器验证
+## 示波器验证
 
 在完成代码编写后，使用 STM32 插件连接 ST-LINK ，将程序烧录到开发板上。随后，使用示波器探头连接到 PA8 引脚，观察输出波形。
 
@@ -116,4 +120,4 @@ $$\large Frequency = \frac{SYSCLK}{(PSC + 1) \times (ARR + 1)}$$
 
 因为测量的是半个周期的宽度，所以需要将测量结果除以 2 以得到频率。可以看到频率为 90kHz 到 70kHz ，可得出实际扫频范围为 45kHz 到 35kHz，完全符合预期。
 
-至此，多功能音频功率放大器系统中极其关键的超声波扫频信号源已经搭建完毕。接下来就可以将这路信号送入大功率放大模块，驱动超声波换能器了。
+这一步完成了 PWM 扫频信号源的初步搭建与频率范围观察。后续仍需测量完整扫频周期，再与功率放大模块和超声波换能器联调；相关方案见本系列第 02 篇。

@@ -1,0 +1,27 @@
+---
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { getSeriesAnchor, getSeriesList } from "@utils/series-utils";
+import { getCategoryUrl, getPostUrlBySlug } from "@utils/url-utils";
+
+const series = await getSeriesList();
+const categories = ["学习笔记", "文献阅读", "硬件项目", "软件项目"];
+---
+<MainGridLayout title="系列导航" description="按内容类型与系列浏览学习笔记、文献阅读和项目记录。">
+    <div class="card-base p-6 md:p-9 text-75">
+        <h1 class="text-3xl font-bold text-90 mb-4">系列导航</h1>
+        <p class="mb-6">按系列阅读，逐步了解一个主题；单篇文章可在归档中按分类或标签查找。</p>
+        {categories.map((category) => <section class="mb-8">
+            <h2 class="text-2xl font-bold text-90 mb-4"><a href={getCategoryUrl(category)}>{category}</a></h2>
+            {series.filter((group) => group.posts[0]?.data.category === category).map((group) =>
+                <section id={getSeriesAnchor(group.name)} class="rounded-xl bg-black/5 dark:bg-white/5 p-4 mb-4 scroll-mt-6">
+                    <h3 class="font-bold text-lg mb-3">{group.name}<span class="text-sm font-normal ml-2">{group.posts.length} 篇</span></h3>
+                    <ol class="space-y-3">
+                        {group.posts.map((post) => <li>
+                            <a class="font-medium text-[var(--primary)] break-words" href={getPostUrlBySlug(post.slug)}>{post.data.title}</a>
+                            <p class="text-sm mt-1">{post.data.description}</p>
+                        </li>)}
+                    </ol>
+                </section>)}
+        </section>)}
+    </div>
+</MainGridLayout>

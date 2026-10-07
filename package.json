@@ -6,11 +6,12 @@
 		"dev": "astro dev",
 		"start": "astro dev",
 		"check": "astro check",
-		"build": "astro build && pagefind --site dist",
+		"build": "node scripts/check-content.js && astro build && pagefind --site dist",
 		"preview": "astro preview",
 		"astro": "astro",
 		"type-check": "tsc --noEmit --isolatedDeclarations",
 		"new-post": "node scripts/new-post.js",
+		"content:check": "node scripts/check-content.js",
 		"format": "biome format --write ./src",
 		"lint": "biome check --write ./src",
 		"preinstall": "npx only-allow pnpm"
@@ -70,7 +71,8 @@
 		"@types/mdast": "^4.0.4",
 		"@types/sanitize-html": "^2.16.0",
 		"postcss-import": "^16.1.1",
-		"postcss-nesting": "^13.0.2"
+		"postcss-nesting": "^13.0.2",
+		"yaml": "2.8.2"
 	},
 	"packageManager": "pnpm@9.14.4"
 }

@@ -1,29 +1,27 @@
 ---
-title: 如何搭建深度学习 Python 环境？(深度学习P2)
+title: "深度学习入门（02）：Windows 下的 Python 与 PyTorch 环境配置"
 published: 2026-05-11
-description: "本文记录我在 Windows 下从零搭建深度学习 Python 环境的过程，梳理 Python、Anaconda/conda、基础库安装、PyTorch 配置与 GPU 验证等内容。"
+description: "记录 Windows 下的 Python 与 conda 环境配置、基础依赖安装和 PyTorch GPU 验证过程。"
 image: "./cover.png"
-tags: ["Python", "Anaconda", "环境配置"]
+tags: ["深度学习", "Python", "PyTorch", "环境配置"]
 category: 学习笔记
 draft: false
+updated: 2026-10-07
+series: "深度学习入门"
+seriesOrder: 2
+lang: zh_CN
 ---
 
->[八大深度学习神经网络有哪些？(深度学习P1)](../八大深度学习神经网络有哪些/)  
->[如何搭建深度学习 Python 环境？(深度学习P2)](../如何搭建深度学习python环境/)  
->[如何处理深度学习的数据？(深度学习P3)](../如何处理深度学习的数据/)  
+## 学习背景与适用环境
 
----
-# 开始
+我来自电子信息专业的硬件方向，初次接触深度学习与通信算法时，最先遇到的是环境配置问题。本文参考知乎博主[咖啡因是恶魔](https://www.zhihu.com/people/dong-ye-zi-icycoconut)的教程[《我该干啥》之新手如何入门深度学习](https://zhuanlan.zhihu.com/p/27337809985)，记录从安装 Python 到验证 PyTorch GPU 的过程。
 
-作为一个电子信息类专业硬件方向的学生，初次接触深度学习与通信算法实在十分头大。( ´•̥̥̥ω•̥̥̥｀ )非常感谢知乎博主[咖啡因是恶魔](https://www.zhihu.com/people/dong-ye-zi-icycoconut)的教程[《我该干啥》之新手如何入门深度学习](https://zhuanlan.zhihu.com/p/27337809985)，让我对深度学习的入门与环境搭建有了一个非常直观的理解。
+文中的环境是 Windows、PowerShell 与 NVIDIA 显卡；路径和版本号是当时的配置示例。安装 PyTorch 时，应按官方安装页面选择与当前设备匹配的命令，再进行文中的 GPU 验证。
 
-根据大佬的教程，我完成了 Python 环境的搭建，并在 VSCode 中安装了相应插件，完成了部分代码的调试。
 
-本文仅表达个人见解，可能会有错误，欢迎指正交流。:)
+## 深度学习为什么要使用 Python？
 
-# 深度学习为什么要使用 Python？
-
-## Python 是什么？
+### Python 是什么？
 
 在最初，我对 Python 的了解也十分浅显，我首先接触的是 C 语言，在朋友的介绍下，我对 Python 的理解是一种很适合调用现成工具、快速完成实验的编程语言。
 
@@ -31,7 +29,7 @@ draft: false
 
 我最初的理解“Python 是一种有很多现成库可以调用的语言”。这个理解虽然不完整，但很适合初学深度学习：在深度学习中，我们通常不会从零实现矩阵运算、神经网络、反向传播和 GPU 加速，而是调用 `numpy`、`pandas`、`matplotlib`、`torch` 等库完成实验。
 
-### Python 和 C 的区别
+#### Python 和 C 的区别
 
 因此最直观的区别是：C 更接近底层，Python 更接近应用和实验。
 
@@ -87,7 +85,7 @@ print(x.mean())
 
 C 更像是在告诉计算机“具体怎么做”，Python 更像是在调用工具完成“我要做什么”。
 
-## 为什么要使用 Python？
+### 为什么要使用 Python？
 
 Python 背后那些工具，很多其实就是 C/C++/CUDA 写的。深度学习里常见的情况是：
 
@@ -115,7 +113,7 @@ Python 的优势是：
 
 Python 的优势在于，它可以通过“一种语言 + 大量成熟库”的方式，完成一个项目中的许多环节，非常全能！比如在深度学习项目中，Python 既可以用来处理数据，也可以用来搭建模型、训练模型、保存结果和画图分析。这样我们不需要频繁切换不同工具，而是可以在同一个 Python 环境中完成大部分实验流程。
 
-# 配置 Python 环境
+## 配置 Python 环境
 
 在初步了解 Python 的优势之后，就可以开始配置 Python 环境了。从 Python 官网直接可以下载安装 Python。它的流程一般是：
 
@@ -139,7 +137,7 @@ pip --version
 
 当终端正常显示 Python 和 `pip` 的版本信息时，环境配置成功。这种方式比较直接，适合学习 Python 基础语法、小脚本、简单自动化任务。但当处理深度学习这样复杂的任务时，就需要做好环境与 Python 版本的管理。
 
-## Python 的环境管理
+### Python 的环境管理
 
 Python 的环境管理有很多种方法，这里介绍两种最常用的方法：`.venv` 和 `.conda`。
 
@@ -179,7 +177,7 @@ pip install numpy matplotlib pandas
 
 如果只用 `.venv`，库主要通过 `pip` 安装。对于普通库来说没问题，但遇到科学计算、深度学习、GPU 相关依赖时，更容易碰到版本不兼容，此时就需要引入 `conda` 来管理环境。
 
-## Anaconda 是什么？
+### Anaconda 是什么？
 
 Anaconda 可以理解为一个面向数据科学、机器学习和深度学习的 Python 工具平台。它不是单纯的 Python，而是把 Python、环境管理工具、包管理工具和一些常用科学计算工具整合在一起。
 
@@ -221,7 +219,7 @@ conda activate env_b
 
 `conda` 可以更方便地创建多个独立环境，每个环境可以指定不同的 Python 版本，并安装适合该项目的一组库。当不同项目之间出现版本冲突时，我们可以通过切换环境来解决，而不是让所有项目共用同一套库。`venv` 也能创建独立环境，但在 Python 版本管理和科学计算依赖管理方面，`conda` 通常更方便。
 
-## 安装 Anaconda 并配置环境
+### 安装 Anaconda 并配置环境
 
 按照教程的思路，如果完全不知道该如何开始，可以先把 Anaconda 安装好，再用 `conda` 为当前项目创建一个独立的 Python 环境。这样做的好处是：系统里的 Python、Anaconda 自带的 `base` 环境、当前项目环境三者可以分开，不容易互相影响。
 
@@ -240,7 +238,7 @@ Anaconda：D:\Anaconda3
 
 这里我没有把 Anaconda 安装到 `D:\Program Files` 这类带空格的路径下，而是直接安装到 `D:\Anaconda3`。这样路径更简单，也能减少一些工具因为路径空格产生的奇怪问题。
 
-### 第一步：安装 Anaconda
+#### 第一步：安装 Anaconda
 
 首先从 Anaconda 官网下载安装包：
 
@@ -274,16 +272,16 @@ conda 25.11.1
 D:\Anaconda3\Scripts\conda.exe init powershell
 ```
 
-执行完成后，关闭当前 PowerShell 或 VSCode 终端，再重新打开一个新的终端。因为终端环境变量和初始化脚本通常需要重新打开后才会生效。
+执行完成后，关闭当前 PowerShell 或 VS Code 终端，再重新打开一个新的终端。因为终端环境变量和初始化脚本通常需要重新打开后才会生效。
 
-### 第二步：创建项目文件夹
+#### 第二步：创建项目文件夹
 
 接着创建一个专门用于学习深度学习的项目文件夹。我这里使用的是：`F:\DeepLearningStudy`
 
 
 这个文件夹可以理解为整个项目的根目录，后面所有代码、数据处理脚本、模型文件都会围绕它展开。
 
-### 第三步：创建当前项目的 conda 环境
+#### 第三步：创建当前项目的 conda 环境
 
 进入项目目录后，使用 `conda` 创建一个项目专属环境：
 
@@ -307,7 +305,7 @@ python=3.12
 
 我没有直接把环境创建成一个全局名字，而是放在项目目录下的 `.conda` 文件夹中。这样打开项目时，一眼就能看出这个项目自己的 Python 环境在哪里。
 
-### 第四步：激活项目环境
+#### 第四步：激活项目环境
 
 环境创建完成后，需要先激活它：
 
@@ -337,7 +335,7 @@ F:\DeepLearningStudy\.conda\python.exe
 
 就说明当前终端已经在使用项目自己的 Python 环境。
 
-### 第五步：安装基础库
+#### 第五步：安装基础库
 
 接下来安装教程中提到的一些常用库：
 
@@ -373,7 +371,7 @@ basic libraries ok
 
 说明这些基础库已经能够正常使用。
 
-### 第六步：安装 PyTorch
+#### 第六步：安装 PyTorch
 
 PyTorch 较为复杂，它与 Python 版本、显卡、CUDA 版本都有关系。更稳妥的方式是去 PyTorch 官网选择适合自己电脑的安装命令：[PyTorch 官方安装页面](https://pytorch.org/get-started/locally/)
 
@@ -386,7 +384,7 @@ python -m pip install torch torchvision torchaudio --index-url https://download.
 
 这里使用 `pip` 是因为 PyTorch 官网会根据当前平台给出推荐命令。也就是说，即使使用 `conda` 创建环境，后续也可以在这个环境中使用 `pip` 安装某些库。
 
-### 第七步：检查 PyTorch 是否能使用 GPU
+#### 第七步：检查 PyTorch 是否能使用 GPU
 
 安装完成后，需要检查 PyTorch 是否真的能调用显卡：
 
@@ -407,7 +405,7 @@ gpu: NVIDIA GeForce RTX 3070 Ti Laptop GPU
 
 就说明 PyTorch 已经能够使用显卡进行深度学习计算。
 
-### 第八步：整理项目结构
+#### 第八步：整理项目结构
 
 环境配置好之后，可以开始整理项目结构。按照教程中的建议，我将当前项目整理成：
 

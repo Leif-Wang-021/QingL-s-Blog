@@ -1,11 +1,14 @@
 ---
 title: "wild 鸿蒙版：轻小说阅读与离线体验优化"
 published: 2026-10-07
-description: "介绍我的 wild 非官方鸿蒙移植分支：保留书架、搜索、阅读与历史记录，补充本地优先缓存、离线目录和下载恢复能力，提供 arm64 HAP。"
-tags: ["wild", "轻小说", "Flutter", "HarmonyOS", "开源"]
+description: "介绍 wild 非官方鸿蒙分支的阅读功能、本地缓存、离线目录与下载恢复，并提供源码和 HAP 下载入口。"
+tags: ["wild", "轻小说", "Flutter", "HarmonyOS"]
 category: 软件项目
 draft: false
 lang: zh_CN
+updated: 2026-10-07
+series: "wild 鸿蒙版"
+seriesOrder: 1
 ---
 
 **wild 鸿蒙版**是我基于 [niuhuan/wild](https://github.com/niuhuan/wild) 维护的非官方 HarmonyOS / OpenHarmony 移植分支。上游是用 Flutter 开发的轻小说文库（文库 8）第三方客户端，这个分支保留原有阅读体验，并补充鸿蒙真机运行所需的平台适配。

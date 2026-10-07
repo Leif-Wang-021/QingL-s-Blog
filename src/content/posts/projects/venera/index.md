@@ -1,11 +1,14 @@
 ---
 title: "Venera 优化版：漫画下载优化与鸿蒙移植"
 published: 2026-10-07
-description: "介绍我的 Venera 分支：在上游漫画阅读器基础上优化下载调度、失败重试和压缩导出，并适配 HarmonyOS，提供 Windows、Android 与鸿蒙版本。"
-tags: ["Venera", "漫画", "Flutter", "HarmonyOS", "开源"]
+description: "介绍 Venera 个人维护分支的下载调度、失败恢复、压缩导出与鸿蒙适配，并提供源码和安装包入口。"
+tags: ["Venera", "漫画", "Flutter", "HarmonyOS"]
 category: 软件项目
 draft: false
 lang: zh_CN
+updated: 2026-10-07
+series: "Venera"
+seriesOrder: 1
 ---
 
 这篇文章介绍我维护的 **Venera 优化版**。它基于 [venera-app/venera](https://github.com/venera-app/venera)，保留本地与网络漫画阅读功能，主要围绕下载体验、导出性能和鸿蒙平台适配继续开发。
@@ -14,7 +17,7 @@ lang: zh_CN
 
 **项目入口：**[源码仓库](https://github.com/Leif-Wang-021/venera) · [下载与更新日志](https://github.com/Leif-Wang-021/venera/releases) · [问题反馈](https://github.com/Leif-Wang-021/venera/issues)
 
-## 这个分支改了什么？
+## 下载与导出优化
 
 漫画下载往往会同时涉及章节目录、图片地址和图片文件。网络波动、站点限流、图片链接过期，都可能让任务卡在获取图片的阶段。这个分支对这些环节进行了调整。
 
